@@ -26,4 +26,7 @@ __Use installation.txt as a guide to perform the following tasks__
 3. download and edit reference files from GENCODE
 4. check the meta data files - barcode_to_sample.txt and samplenames_CACNA1C.txt 
 5. when running the test CACNA1C dataset, unzip (using unzip command) the FASTA files and check the format of the filenames
+6. Check the paths in both scripts and change parameters (if required)
+6. Run indexing.pbs (qsub indexing.pbs)
+7. Run TAQLoRe_v1.pbs (qsub TAQLoRe_v1.pbs)
 
