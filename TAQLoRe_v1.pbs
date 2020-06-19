@@ -129,13 +129,13 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-						perl $SCRIPTS/parse_maf_annotations.pl $ANNOTATIONS \
-						$WDIR/results/parsed_last_output/${base}/selected_reads_potential_exons.maf \
-						$WDIR/results/parsed_last_output/${base}/potential_missing_exons.out \
-						$DISTANCE_BETWEEN_EXONS ${base} \
-						$WDIR/results/parsed_last_output/${base}
+			perl $SCRIPTS/parse_maf_annotations.pl $ANNOTATIONS \
+			$WDIR/results/parsed_last_output/${base}/selected_reads_potential_exons.maf \
+			$WDIR/results/parsed_last_output/${base}/potential_missing_exons.out \
+			$DISTANCE_BETWEEN_EXONS ${base} \
+			$WDIR/results/parsed_last_output/${base}
 			
-				touch $WDIR/results/parsed_last_output/${base}/${base}.parse_maf_transcripts_04.COMPLETED
+		touch $WDIR/results/parsed_last_output/${base}/${base}.parse_maf_transcripts_04.COMPLETED
 		done
 
 
@@ -145,7 +145,7 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-					cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\\t"}}{{if($1=="$CHR" && $2>=$GENE_START && $3<=$GENE_END){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
+			cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\\t"}}{{if($1=="$CHR" && $2>=$GENE_START && $3<=$GENE_END){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
 		done
 
 
@@ -156,13 +156,13 @@ for filename in $EXAMPLES/*.fa
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
 
-					python3 -u $SCRIPTS/novel_exons_per_library.py \
-					$WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed \
-					$CHROM_SIZES ${base} \
-					$WDIR/results/bedgraph_info_novel_exons/${base}.BedGraph \
-					$WDIR/results/bedgraph_info_novel_exons/${base}.extended_info.txt 
+			python3 -u $SCRIPTS/novel_exons_per_library.py \
+			$WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed \
+			$CHROM_SIZES ${base} \
+			$WDIR/results/bedgraph_info_novel_exons/${base}.BedGraph \
+			$WDIR/results/bedgraph_info_novel_exons/${base}.extended_info.txt 
 
-				touch $WDIR/results/bedgraph_info_novel_exons/${base}.novel_exons_per_library.COMPLETED
+		touch $WDIR/results/bedgraph_info_novel_exons/${base}.novel_exons_per_library.COMPLETED
 		done
 
 
