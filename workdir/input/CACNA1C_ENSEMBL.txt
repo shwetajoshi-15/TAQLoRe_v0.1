@@ -1,4 +1,4 @@
-Ensembl Gene ID	Gene Start (bp)	Gene End (bp)	Ensembl Transcript ID	Transcript Start (bp)	Transcript End (bp)	Transcription Start Site (TSS)	Ensembl Exon ID	Exon Chr Start (bp)	Exon Chr End (bp)	Exon Rank in Transcript	cDNA coding start	cDNA coding end	Genomic coding start	Genomic coding end
+Ensembl	Gene	ID	Gene	Start	(bp)	Gene	End	(bp)	Ensembl	Transcript	ID	Transcript	Start	(bp)	Transcript	End	(bp)	Transcription	Start	Site	(TSS)	Ensembl	Exon	ID	Exon	Chr	Start	(bp)	Exon	Chr	End	(bp)	Exon	Rank	in	Transcript	cDNA	coding	start	cDNA	coding	end	Genomic	coding	start	Genomic	coding	end
 ENSG00000151067	1970786	2697950	ENST00000613940	2448976	2697949	2448976	ENSE00000997453	2448976	2449115	1	1	140	2448976	2449115
 ENSG00000151067	1970786	2697950	ENST00000613940	2448976	2697949	2448976	ENSE00001788509	2457567	2457706	2	141	280	2457567	2457706
 ENSG00000151067	1970786	2697950	ENST00000613940	2448976	2697949	2448976	ENSE00001677895	2486104	2486262	3	281	439	2486104	2486262
