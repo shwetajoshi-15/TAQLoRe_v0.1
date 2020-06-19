@@ -20,10 +20,10 @@ echo "Making directories and folders"
 mkdir $WDIR/LAST_index
 
 echo "Generating last index for transcriptome"
-lastdb -P10000 -uNEAR -R01 $WDIR/LAST_index/transcriptome $WDIR/input/gencode.v34.transcripts_edit.fa
+lastdb -uNEAR -R01 $WDIR/LAST_index/transcriptome $WDIR/input/gencode.v34.transcripts_edit.fa
 
 echo "Generating last index for genome"
-lastdb -P10000 -uNEAR -R01 $WDIR/LAST_index/genome $WDIR/input/GRCh38.p13.genome_edit.fa
+lastdb -uNEAR -R01 $WDIR/LAST_index/genome $WDIR/input/GRCh38.p13.genome_edit.fa
 
 echo "Creating a confirmation files"
 touch $WDIR/LAST_index/transcriptomedummy.COMPLETED
