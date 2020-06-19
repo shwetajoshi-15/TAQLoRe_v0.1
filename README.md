@@ -19,8 +19,8 @@ This repository consists of scripts for installation, set-up and execution of th
 
 
 #### Running TAQLoRe_v1 for the first time ####
-_Setting up_
-- Use installation.txt as a guide to perform the following tasks 
+#### Setting up ####
+__Use installation.txt as a guide to perform the following tasks__
 1. install conda and addtional programs using conda
 2. use the YAML file (envs/taqlore.yaml) to set up the conda env
 3. download and edit reference files from GENCODE
