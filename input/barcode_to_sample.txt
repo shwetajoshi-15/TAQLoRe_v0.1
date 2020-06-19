@@ -1,0 +1,5 @@
+2017_01_13      barcode01       5238_cingulate
+2017_01_13      barcode02       5238_DLPFC
+2017_01_13      barcode03       5238_occipital
+2017_01_13      barcode04       5238_parietal
+2017_01_13      barcode05       5298_cingulate
