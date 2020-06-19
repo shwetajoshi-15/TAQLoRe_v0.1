@@ -1,0 +1,98 @@
+TAQLoRe github 
+https://github.com/twrzes/TAQLoRe
+
+💡 Full documentation is available at https://taqlore.readthedocs.io
+
+🖥 Installing git, and snamkemake and miniconda/anaconda for running TAQLoRe
+  
+  # Installing miniconda for Linux (install miniconda in the home directory)
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  bash Miniconda3-latest-Linux-x86_64.sh
+  
+  # Installing git 
+  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo apt-get install git-lfs
+  git lfs install
+  
+  OR
+  
+  conda install -c conda-forge git-lfs
+  git lfs install
+  
+  # Installing snakemake-minimal
+  conda install snakemake
+  
+🖥 Installing other packages for running TAQLoRe
+
+conda install -c aroth85 bioutils
+conda install -c bioconda pybedtools
+conda install -c bioconda bedtools 
+conda install -c bioconda gmap
+conda install -c bioconda last
+
+
+🖥 Setting up a directory and downloading TAQLoRe
+   
+  # Make the following directory in the location of your choice within the working directory (not home directory)
+  mkdir taqlore_dir
+  cd taqlore_dir
+  git clone https://github.com/shwetajoshi-15/TAQLoRe_v1.git
+  
+🖥 Creating a conda environment
+
+conda env create --file /path/to/taqlore_dir/TAQLoRe_v1/envs/taqlore.yaml
+
+🗃 Reference Files for taqlore_dir/TAQLoRe_v1/workdir/input/
+   
+   { cd taqlore_dir/TAQLoRe_v1/workdir/input }
+   
+GENCODE genome and transcriptome reference
+   
+wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/GRCh38.p13.genome.fa.gz
+wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz
+wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.fa.gz
+
+🖥 Editing the reference and annotation files for use with TAQLoRe
+
+  { cd taqlore_dir/TAQLoRe_v1/workdir/input }
+
+  gunzip GRCh38.p13.genome.fa.gz
+  gunzip gencode.v34.transcripts.fa.gz
+
+  cut -d " " -f 1 GRCh38.p13.genome.fa > GRCh38.p13.genome_edit.fa
+  cut -d "|" -f 1 gencode.v34.transcripts.fa > gencode.v34.transcripts_edit.fa
+  
+🖥 Create file with metadata for use with TAQLoRe_v1
+
+  { cd taqlore_dir/TAQLoRe_v1/workdir/input }
+  { create file barcode_to_sample.txt }
+  
+2017_01_13      barcode01       Jan_5238_cingulate
+2017_01_13      barcode02       Jan_5238_DLPFC
+2017_01_13      barcode03       Jan_5238_occipital
+2017_01_13      barcode04       Jan_5238_parietal
+2017_01_13      barcode05       Jan_5298_cingulate
+
+
+🖥 Create file with sample names for use with TAQLoRe_v1
+
+  { cd taqlore_dir/TAQLoRe/workdir/input }
+  { create file samplenames.txt }
+
+Jan_5238_cingulate
+Jan_5238_DLPFC
+Jan_5238_occipital
+Jan_5238_parietal
+Jan_5298_cingulate
+
+  
+🖥 Format of sample filenames for use with TAQLoRe
+  
+  { ls -lh /path/to/taqlore_dir/TAQLoRe/examples/CACNA1C }
+  
+  2017_01_13.barcode01.fa
+  2017_01_13.barcode02.fa
+  2017_01_13.barcode03.fa
+  2017_01_13.barcode04.fa
+  2017_01_13.barcode05.fa
+  
