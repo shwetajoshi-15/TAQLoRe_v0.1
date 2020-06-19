@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -q normal
+#PBS -l walltime=04:00:00
+#PBS -l mem=64GB
+#PBS -l ncpus=12
+#PBS -l wd
+#PBS -j oe
+#PBS -m abe
+#PBS -M email@student.unimelb.edu.au
+#PBS -N taqlore_indexing
+
+source activate taqlore
+
+echo "Assigning paths to variables"
+
+WDIR=/path/to/taqlore_dir/TAQLoRe_v1/workdir
+
+echo "Making directories and folders"
+
+mkdir $WDIR/LAST_index
+
+echo "Generating last index for transcriptome"
+lastdb -P10000 -uNEAR -R01 $WDIR/LAST_index/transcriptome $WDIR/input/gencode.v34.transcripts_edit.fa
+
+echo "Generating last index for genome"
+lastdb -P10000 -uNEAR -R01 $WDIR/LAST_index/genome $WDIR/input/GRCh38.p13.genome_edit.fa
+
+echo "Creating a confirmation files"
+touch $WDIR/LAST_index/transcriptomedummy.COMPLETED
+touch $WDIR/LAST_index/genomedummy.COMPLETED
