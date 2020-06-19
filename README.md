@@ -2,8 +2,7 @@
 
 This repository consists of scripts for installation, set-up and execution of the exon based arm of TAQLoRe on a PBS based HPC system.
 
-💡 TAQLoRe github https://github.com/twrzes/TAQLoRe
-
+💡 TAQLoRe github https://github.com/twrzes/TAQLoRe💡 Exisiting annotation for CACNA1C can be found in /path/to/TAQLoRe_v1/wokdir/input. For other genes of interest refer to       _"How to create ENSEMBL annotation file"_
 
 
 ### installation.pbs ###
@@ -13,8 +12,7 @@ This repository consists of scripts for installation, set-up and execution of th
 - indexing genome and transcriptome references with LAST
 
 ### TAQLoRe_v1.pbs ###
-- __paths to output directories and other parameters need modification__
+- paths to output directories and other parameters need modification
 - running part 1 & 2 of the original TAQLoRe pipeline 
 
 
-💡 Exisiting annotation for CACNA1C can be found in /path/to/TAQLoRe_v1/wokdir/input. For other genes of interest refer to       _"How to create ENSEMBL annotation file"_
