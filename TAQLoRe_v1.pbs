@@ -101,7 +101,6 @@ for filename in $EXAMPLES/*.fa
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
 
-               last-train $WDIR/LAST_index/transcriptome $EXAMPLES/${base}.fa > $WDIR/LAST_transcriptome/substitution_rate/${base}.par
                lastal $WDIR/LAST_index/transcriptome $EXAMPLES/${base}.fa > $WDIR/LAST_transcriptome/alignments_maf/${base}.maf
 
         done
