@@ -128,13 +128,15 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-			perl $SCRIPTS/parse_maf_annotations.pl $ANNOTATIONS \
-			$WDIR/results/parsed_last_output/${base}/selected_reads_potential_exons.maf \
-			$WDIR/results/parsed_last_output/${base}/potential_missing_exons.out \
-			$DISTANCE_BETWEEN_EXONS ${base} \
-			$WDIR/results/parsed_last_output/${base}
+		
+		perl $SCRIPTS/parse_maf_annotations.pl $ANNOTATIONS \
+		$WDIR/results/parsed_last_output/${base}/selected_reads_potential_exons.maf \
+		$WDIR/results/parsed_last_output/${base}/potential_missing_exons.out \
+		$DISTANCE_BETWEEN_EXONS ${base} \
+		$WDIR/results/parsed_last_output/${base}
 			
 		touch $WDIR/results/parsed_last_output/${base}/${base}.parse_maf_transcripts_04.COMPLETED
+		
 		done
 
 
@@ -144,8 +146,8 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-			cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\\t"}}{{if($1=="$CHR" && $2>=$GENE_START && $3<=$GENE_END){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
-		done
+		cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="$CHR" && $2>=$GENE_START && $3<=$GENE_END){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
+	done
 
 
 echo "Generating BedGraph and extra information for a particular libraries" 
@@ -155,14 +157,14 @@ for filename in $EXAMPLES/*.fa
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
 
-			python3 -u $SCRIPTS/novel_exons_per_library.py \
-			$WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed \
-			$CHROM_SIZES ${base} \
-			$WDIR/results/bedgraph_info_novel_exons/${base}.BedGraph \
-			$WDIR/results/bedgraph_info_novel_exons/${base}.extended_info.txt 
+		python3 -u $SCRIPTS/novel_exons_per_library.py \
+		$WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed \
+		$CHROM_SIZES ${base} \
+		$WDIR/results/bedgraph_info_novel_exons/${base}.BedGraph \
+		$WDIR/results/bedgraph_info_novel_exons/${base}.extended_info.txt 
 
 		touch $WDIR/results/bedgraph_info_novel_exons/${base}.novel_exons_per_library.COMPLETED
-		done
+	done
 
 
 echo "Generating the summary file with all the regions covered by at least one read in a one library"
@@ -175,17 +177,17 @@ rm temp_file
 echo "Generating BedGraph file from summary (extracting columns 1-3 and 28, which is the last column, removing header, adding track info)"
 
 echo 'track type=bedGraph name="Novel_Exons_for_$GENE" description="Novel_Exons_for_$GENE" visibility=full color=0,0,0 altColor=0,0,0 priority=20' > $WDIR/results/bedgraph_info_novel_exons/sum.BedGraph
-cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | tail -n +2 | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2, $3, $NF}}' >> $WDIR/results/bedgraph_info_novel_exons/sum.BedGraph
+cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | tail -n +2 | awk 'BEGIN{{OFS="\t"}}{{print $1, $2, $3, $NF}}' >> $WDIR/results/bedgraph_info_novel_exons/sum.BedGraph
 
 echo "Function to return a string depending if the gene is on positive or negative strand"
-
-def PositiveNegativeStrand(wildcards):
-    if config["gene_info"]["strand"] == '+':
-        return 'sort -k1,1 -k2,2n -k3,3n'
-    elif config["gene_info"]["strand"] == '-':
-        return 'sort -k1,1 -k2,2nr -k3,3nr'
-
 echo "This rule generate a file with positions of novel exons (irrespectively of the amount of reads covering particular exons), together with exon names"
+
+if [[ $STRAND == '+' ]]
+then # if/then branch
+  cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2n -k3,3n | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results/meta_gene_construction/novel_exons_coordinates_1nt.txt
+else
+  cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2nr -k3,3nr | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results/meta_gene_construction/novel_exons_coordinates_1nt.txt
+fi
 
 cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | PositiveNegativeStrand | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results/meta_gene_construction/novel_exons_coordinates_1nt.txt
 
