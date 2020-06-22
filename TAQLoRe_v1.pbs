@@ -286,6 +286,7 @@ echo "excluding_reads_splicing_patterns_removed_exons"
 			$WDIR/$WDIR/results/meta_gene_exon_counts_splicing_patterns/${base}_splicing_patterns_cds.tmp \
 			$WDIR/$WDIR/results/reads_splicing_patterns_removed_exons/${base}.min_reads_$MIN_READ_COUNT.min_individuals_$MIN_INDIVIDUALS.min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.included.txt \
 			$WDIR/$WDIR/results/reads_splicing_patterns_removed_exons/${base}.min_reads_$MIN_READ_COUNT.min_individuals_$MIN_INDIVIDUALS.min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.excluded.txt
+	done
 
 echo "Reporting the longest isoform with downweighted read counts"
 echo "downweighted_counts_longest_isoform"
