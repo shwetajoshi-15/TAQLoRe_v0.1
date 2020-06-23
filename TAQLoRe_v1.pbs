@@ -185,6 +185,8 @@ echo "Annotating the genomic coordinates of exons with UTR annotaions"
 Rscript $SCRIPTS/UTR_anno.r -f $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
 -u $WDIR/input/$GENE_UTR.bed -o $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
 
+sed -i 's/NA\tNA/NA/g' $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
+
 
 ##########################################################################################################
 ##                                                                                                      ## 
