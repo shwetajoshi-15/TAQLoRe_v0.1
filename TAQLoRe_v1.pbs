@@ -66,27 +66,6 @@ mkdir $WDIR/results/bedgraph_info_novel_exons
 mkdir $WDIR/results/meta_gene_construction
 
 
-echo "Making directories for part 2"
-
-mkdir $WDIR/results/meta_gene_construction
-mkdir $WDIR/results/meta_gene_construction/GMAP_index
-mkdir $WDIR/results/GMAP_align_meta_gene
-mkdir $WDIR/results/meta_gene_exon_counts_splicing_patterns
-mkdir $WDIR/results/all_isoforms_annotation_table_downweighted_reads
-mkdir $WDIR/results/annotation_table_filtered_downweighted_read_counts
-mkdir $WDIR/results/coding_length_extra_annotation
-mkdir $WDIR/results/downweighted_read_counts_after_removing_exons
-mkdir $WDIR/results/downweighted_read_counts_after_removing_exons/histograms
-mkdir $WDIR/results/exons_filtering
-mkdir $WDIR/results/filtered_downweighted_read_counts
-mkdir $WDIR/results/missing_exons_novel_junctions_expression
-mkdir $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table
-mkdir $WDIR/results/plots
-mkdir $WDIR/results/plots/PCA
-mkdir $WDIR/results/plots/heatmaps
-mkdir $WDIR/results/reads_splicing_patterns_removed_exons
-mkdir $WDIR/results/tmm_normalized_filtered_downweighted_read_counts
-
 ##########################################################################################################
 ##                                                                                                      ## 
 ##                                   Starting TAQLoRe Part 1                                            ##
@@ -215,6 +194,25 @@ Rscript $SCRIPTS/UTR_anno.r -f $WDIR/results/meta_gene_construction/meta_gene_ge
 ##                                                                                                      ## 
 ##########################################################################################################
 
+echo "Making directories for part 2"
+
+mkdir $WDIR/results/meta_gene_construction/GMAP_index
+mkdir $WDIR/results/GMAP_align_meta_gene
+mkdir $WDIR/results/meta_gene_exon_counts_splicing_patterns
+mkdir $WDIR/results/all_isoforms_annotation_table_downweighted_reads
+mkdir $WDIR/results/annotation_table_filtered_downweighted_read_counts
+mkdir $WDIR/results/coding_length_extra_annotation
+mkdir $WDIR/results/downweighted_read_counts_after_removing_exons
+mkdir $WDIR/results/downweighted_read_counts_after_removing_exons/histograms
+mkdir $WDIR/results/exons_filtering
+mkdir $WDIR/results/filtered_downweighted_read_counts
+mkdir $WDIR/results/missing_exons_novel_junctions_expression
+mkdir $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table
+mkdir $WDIR/results/plots
+mkdir $WDIR/results/plots/PCA
+mkdir $WDIR/results/plots/heatmaps
+mkdir $WDIR/results/reads_splicing_patterns_removed_exons
+mkdir $WDIR/results/tmm_normalized_filtered_downweighted_read_counts
 
 echo "Assigning variables based on config_TAQLoRe.json"
 
