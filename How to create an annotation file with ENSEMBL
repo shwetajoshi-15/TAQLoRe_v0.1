@@ -1,0 +1,27 @@
+How to create an annotation file with ENSEMBL bioMart
+
+To create a file needed in the pipeline, you need to use ENSEMBL BioMart. The reason behind it is that some information required to run the pipeline may not be included in the GTF file (e.g. UTRs).
+
+The file can be created with following steps:
+
+Go to http://www.ensembl.org/biomart/martview
+From ENSEMBL Genes database choose the dataset of interest (e.g. Human Genes).
+From Filters section on the left-hand side of the website choose the gene of interest (e.g. select Input external references ID list [Max 500 advised], and put ENSEMBL gene ID into the field).
+From Attributes section on the left-hand side of the website select Structures, deselect all attributes (from GENE subsection), and select following attributes (IN THIS PARTICULAR ORDER) (subsections of attributes are written in square brackets):
+Gene stable ID [GENE]
+Gene start (bp) [GENE]
+Gene end (bp) [GENE]
+Transcript stable ID [GENE]
+Transcript start (bp) [GENE]
+Transcript end (bp) [GENE]
+Transcription start site (TSS) [GENE]
+Exon stable ID [EXON]
+Exon region start (bp) [EXON]
+Exon region end (bp) [EXON]
+Exon rank in transcript [EXON]
+cDNA coding start [EXON]
+cDNA coding end [EXON]
+Genomic coding start [EXON]
+Genomic coding end [EXON]
+Click Results button on top-left side of the website.
+From Export all results to ** section, choose **File and TSV format, then click Go and save the file in the desired location.
