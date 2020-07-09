@@ -16,7 +16,7 @@ echo "Gene of Interest"
 GENE=CACNA1C
 CHR=chr12
 STRAND=+
-GENE_START=2053297
+GENE_START=1970786
 GENE_END=2697950
 
 echo "Assigning paths"
