@@ -1,5 +1,5 @@
-Jan_5238_cingulate
-Jan_5238_DLPFC
-Jan_5238_occipital
-Jan_5238_parietal
-Jan_5298_cingulate
+5238_cingulate
+5238_DLPFC
+5238_occipital
+5238_parietal
+5298_cingulate
