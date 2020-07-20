@@ -47,8 +47,8 @@ DISTANCE_BETWEEN_EXONS=200
 MIN_EXON_LENGTH=6
 MIN_EXON_COVERAGE_FRACTION=0.7
 
-MIN_INDIVIDUALS=2
-MIN_LIBRARIES_PER_INDIVIDUAL=2 
+MIN_INDIVIDUALS=1
+MIN_LIBRARIES_PER_INDIVIDUAL=1 
 MIN_READ_COUNT=5
 
 
@@ -57,13 +57,13 @@ NUM_SAMPLES_THRESHOLD=2
 
 echo "Making directories for part 1"
 
-mkdir $WDIR/LAST_transcriptome
-mkdir $WDIR/LAST_transcriptome/alignments_maf
-mkdir $WDIR/LAST_transcriptome/substitution_rate
-mkdir $WDIR/results
-mkdir $WDIR/results/parsed_last_output
-mkdir $WDIR/results/bedgraph_info_novel_exons
-mkdir $WDIR/results/meta_gene_construction
+mkdir -p $WDIR/LAST_transcriptome
+mkdir -p $WDIR/LAST_transcriptome/alignments_maf
+mkdir -p $WDIR/LAST_transcriptome/substitution_rate
+mkdir -p $WDIR/results
+mkdir -p $WDIR/results/parsed_last_output
+mkdir -p $WDIR/results/bedgraph_info_novel_exons
+mkdir -p $WDIR/results/meta_gene_construction
 
 
 ##########################################################################################################
@@ -196,23 +196,23 @@ sed -i 's/NA\tNA/NA/g' $WDIR/results/meta_gene_construction/meta_gene_genomic_ex
 
 echo "Making directories for part 2"
 
-mkdir $WDIR/results/meta_gene_construction/GMAP_index
-mkdir $WDIR/results/GMAP_align_meta_gene
-mkdir $WDIR/results/meta_gene_exon_counts_splicing_patterns
-mkdir $WDIR/results/all_isoforms_annotation_table_downweighted_reads
-mkdir $WDIR/results/annotation_table_filtered_downweighted_read_counts
-mkdir $WDIR/results/coding_length_extra_annotation
-mkdir $WDIR/results/downweighted_read_counts_after_removing_exons
-mkdir $WDIR/results/downweighted_read_counts_after_removing_exons/histograms
-mkdir $WDIR/results/exons_filtering
-mkdir $WDIR/results/filtered_downweighted_read_counts
-mkdir $WDIR/results/missing_exons_novel_junctions_expression
-mkdir $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table
-mkdir $WDIR/results/plots
-mkdir $WDIR/results/plots/PCA
-mkdir $WDIR/results/plots/heatmaps
-mkdir $WDIR/results/reads_splicing_patterns_removed_exons
-mkdir $WDIR/results/tmm_normalized_filtered_downweighted_read_counts
+mkdir -p $WDIR/results/meta_gene_construction/GMAP_index
+mkdir -p $WDIR/results/GMAP_align_meta_gene
+mkdir -p $WDIR/results/meta_gene_exon_counts_splicing_patterns
+mkdir -p $WDIR/results/all_isoforms_annotation_table_downweighted_reads
+mkdir -p $WDIR/results/annotation_table_filtered_downweighted_read_counts
+mkdir -p $WDIR/results/coding_length_extra_annotation
+mkdir -p $WDIR/results/downweighted_read_counts_after_removing_exons
+mkdir -p $WDIR/results/downweighted_read_counts_after_removing_exons/histograms
+mkdir -p $WDIR/results/exons_filtering
+mkdir -p $WDIR/results/filtered_downweighted_read_counts
+mkdir -p $WDIR/results/missing_exons_novel_junctions_expression
+mkdir -p $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table
+mkdir -p $WDIR/results/plots
+mkdir -p $WDIR/results/plots/PCA
+mkdir -p $WDIR/results/plots/heatmaps
+mkdir -p $WDIR/results/reads_splicing_patterns_removed_exons
+mkdir -p $WDIR/results/tmm_normalized_filtered_downweighted_read_counts
 
 echo "Assigning variables based on config_TAQLoRe.json"
 
