@@ -29,6 +29,7 @@ conda install -c bioconda pybedtools
 conda install -c bioconda bedtools 
 conda install -c bioconda gmap
 conda install -c bioconda last
+conda install -c bioconda nanostat
 
 
 🖥 Setting up a directory and downloading TAQLoRe
