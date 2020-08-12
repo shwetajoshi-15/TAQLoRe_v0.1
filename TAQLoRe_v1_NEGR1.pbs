@@ -1,0 +1,474 @@
+#!/bin/bash
+#PBS -q normal
+#PBS -l walltime=08:00:00
+#PBS -l mem=64GB
+#PBS -l ncpus=12
+#PBS -l wd
+#PBS -j oe
+#PBS -m abe
+#PBS -M email@student.unimelb.edu.au
+#PBS -N TAQLoRe_v1
+
+source activate taqlore
+
+echo "Gene of Interest"
+
+GENE=NEGR1
+CHR=chr1
+STRAND=-
+GENE_START=71395943
+GENE_END=72282539
+
+echo "Assigning paths"
+
+EXAMPLES=/path/to/taqlore_dir/TAQLoRe_v1/examples/$GENE
+WDIR=/path/to/taqlore_dir/TAQLoRe_v1/workdir
+SCRIPTS=/path/to/taqlore_dir/TAQLoRe_v1/scripts
+
+echo "Assigning variables"
+
+GENOME=$WDIR/input/GRCh38.p13.genome_edit.fa
+ANNOTATIONS=$WDIR/input/gencode.v34.annotation.gtf
+EXISTING_EXONS=$WDIR/input/ENSEMBL_NEGR1.txt
+
+CHROM_SIZES=$WDIR/input/chrom_sizes.txt
+
+echo "Assigning parameters"
+
+MIN_PROP=0.5
+MIN_PROP_ALIGN=0.8 
+MIN_INSERT=9
+MIN_EXON_DISTANCE=6
+
+
+DISTANCE_BETWEEN_EXONS=200
+
+
+MIN_EXON_LENGTH=6
+MIN_EXON_COVERAGE_FRACTION=0.7
+
+MIN_INDIVIDUALS=1
+MIN_LIBRARIES_PER_INDIVIDUAL=1 
+MIN_READ_COUNT=5
+
+
+READS_IN_SAMPLE_FILTER=1 
+NUM_SAMPLES_THRESHOLD=2
+
+echo "Making directories for part 1"
+
+mkdir -p $WDIR/nanoplot_QC
+mkdir -p $WDIR/LAST_transcriptome
+mkdir -p $WDIR/LAST_transcriptome/alignments_maf
+mkdir -p $WDIR/LAST_transcriptome/substitution_rate
+mkdir -p $WDIR/results
+mkdir -p $WDIR/results/parsed_last_output
+mkdir -p $WDIR/results/bedgraph_info_novel_exons
+mkdir -p $WDIR/results/meta_gene_construction
+
+
+##########################################################################################################
+##                                                                                                      ## 
+##                                   Starting TAQLoRe Part 1                                            ##
+##     for additional info refer to : https://taqlore.readthedocs.io/en/latest/usage_exon_based.html    ##
+##                                                                                                      ##
+##                                                                                                      ## 
+##########################################################################################################
+
+
+echo "Performing QC with nanoplot on the fasta files"
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+		
+              NanoStat --fasta $EXAMPLES/${base}.fa --outdir $WDIR/nanoplot_QC/${base}_statreports
+
+        done
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+
+               lastal $WDIR/LAST_index/transcriptome $EXAMPLES/${base}.fa > $WDIR/LAST_transcriptome/alignments_maf/${base}.maf
+
+        done
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+                        mkdir $WDIR/results/parsed_last_output/${base}
+
+                        perl $SCRIPTS/parse_maf_transcripts_04.pl \
+                        $WDIR/LAST_transcriptome/alignments_maf/${base}.maf \
+                        $ANNOTATIONS $MIN_PROP $MIN_PROP_ALIGN $MIN_INSERT $MIN_EXON_DISTANCE 4 \
+                        $EXAMPLES/${base}.fa $WDIR/LAST_index/genome \
+                        $WDIR/results/parsed_last_output/${base}
+                      
+               touch $WDIR/results/parsed_last_output/${base}/${base}.parse_maf_transcripts_04.COMPLETED
+
+        done
+
+echo "Obtaining the genomic coordinates for potential novel exons"
+# dist parameter in the file is a distance between exons (so the minimum intronic space between exons)
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+		
+		perl $SCRIPTS/parse_maf_annotations.pl $ANNOTATIONS \
+		$WDIR/results/parsed_last_output/${base}/selected_reads_potential_exons.maf \
+		$WDIR/results/parsed_last_output/${base}/potential_missing_exons.out \
+		$DISTANCE_BETWEEN_EXONS ${base} \
+		$WDIR/results/parsed_last_output/${base}
+			
+		touch $WDIR/results/parsed_last_output/${base}/${base}.parse_maf_transcripts_04.COMPLETED
+		
+		done
+
+
+echo "Filtering out exons that are not in the correct genomic positions for a gene of interest"
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+		cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="chr12" && $2>=1970786 && $3<=2697950){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
+	done
+
+
+echo "Generating BedGraph and extra information for a particular libraries" 
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+
+		python3 -u $SCRIPTS/novel_exons_per_library.py \
+		$WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed \
+		$CHROM_SIZES ${base} \
+		$WDIR/results/bedgraph_info_novel_exons/${base}.BedGraph \
+		$WDIR/results/bedgraph_info_novel_exons/${base}.extended_info.txt 
+
+		touch $WDIR/results/bedgraph_info_novel_exons/${base}.novel_exons_per_library.COMPLETED
+	done
+
+
+echo "Generating the summary file with all the regions covered by at least one read in a one library"
+
+python3 -u $SCRIPTS/novel_exons_summary.py $WDIR/results/bedgraph_info_novel_exons \
+temp_file $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt 
+
+rm temp_file
+
+echo "Generating BedGraph file from summary (extracting columns 1-3 and 28, which is the last column, removing header, adding track info)"
+
+echo 'track type=bedGraph name="Novel_Exons_for_$GENE" description="Novel_Exons_for_$GENE" visibility=full color=0,0,0 altColor=0,0,0 priority=20' > $WDIR/results/bedgraph_info_novel_exons/sum.BedGraph
+cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | tail -n +2 | awk 'BEGIN{{OFS="\t"}}{{print $1, $2, $3, $NF}}' >> $WDIR/results/bedgraph_info_novel_exons/sum.BedGraph
+
+echo "Function to return a string depending if the gene is on positive or negative strand"
+echo "This rule generate a file with positions of novel exons (irrespectively of the amount of reads covering particular exons), together with exon names"
+
+if [[ $STRAND == '+' ]]
+then # if/then branch
+  cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2n -k3,3n | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results/meta_gene_construction/novel_exons_coordinates_1nt.txt
+else
+  cat $WDIR/results/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2nr -k3,3nr | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results/meta_gene_construction/novel_exons_coordinates_1nt.txt
+fi
+
+echo "Generating files with meta-gene and genomic coordinates of exons (coordinates in 1-based format)"
+
+python3 -u $SCRIPTS/exons_coordinates.py $EXISTING_EXONS \
+$WDIR/results/meta_gene_construction/novel_exons_coordinates_1nt.txt \
+$STRAND $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
+
+echo "Generating UTR annotations from the GTF file and creating a bed file"
+
+cat $ANNOTATIONS | grep $GENE | awk '$3 == "UTR"' | awk '{print $1,$4,$5}' > $WDIR/input/$GENE_UTR.bed
+
+echo "Annotating the genomic coordinates of exons with UTR annotaions" 
+
+Rscript $SCRIPTS/UTR_anno.r -f $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+-u $WDIR/input/$GENE_UTR.bed -o $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
+
+sed -i 's/NA\tNA/NA/g' $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
+
+
+##########################################################################################################
+##                                                                                                      ## 
+##                                   Starting TAQLoRe Part 2                                            ##
+##     for additional info refer to : https://taqlore.readthedocs.io/en/latest/usage_exon_based.html    ##
+##                                                                                                      ##
+##                                                                                                      ## 
+##########################################################################################################
+
+echo "Making directories for part 2"
+
+mkdir -p $WDIR/results/meta_gene_construction/GMAP_index
+mkdir -p $WDIR/results/GMAP_align_meta_gene
+mkdir -p $WDIR/results/meta_gene_exon_counts_splicing_patterns
+mkdir -p $WDIR/results/all_isoforms_annotation_table_downweighted_reads
+mkdir -p $WDIR/results/annotation_table_filtered_downweighted_read_counts
+mkdir -p $WDIR/results/coding_length_extra_annotation
+mkdir -p $WDIR/results/downweighted_read_counts_after_removing_exons
+mkdir -p $WDIR/results/downweighted_read_counts_after_removing_exons/histograms
+mkdir -p $WDIR/results/exons_filtering
+mkdir -p $WDIR/results/filtered_downweighted_read_counts
+mkdir -p $WDIR/results/missing_exons_novel_junctions_expression
+mkdir -p $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table
+mkdir -p $WDIR/results/plots
+mkdir -p $WDIR/results/plots/PCA
+mkdir -p $WDIR/results/plots/heatmaps
+mkdir -p $WDIR/results/reads_splicing_patterns_removed_exons
+mkdir -p $WDIR/results/tmm_normalized_filtered_downweighted_read_counts
+
+echo "Assigning variables based on config_TAQLoRe.json"
+
+echo "Generate a BED file (0-based) with genomic coordinates of all the exons in the meta-gene"
+
+	cat $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt | awk 'BEGIN{OFS="\t"}{print "$CHR", $3-1, $4, ".", ".", "$STRAND"}' > $WDIR/results/meta_gene_construction/genomic_coordinates_all_exons.bed
+
+echo "Obtain FASTA sequence of exons to construct meta-gene"
+
+	bedtools getfasta -s -fi $GENOME \
+	-bed $WDIR/results/meta_gene_construction/genomic_coordinates_all_exons.bed \
+	-fo $WDIR/results/meta_gene_construction/meta_gene_exons_sequences.fa
+
+echo "Creating an index of meta-gene for GMAP aligner"
+
+	gmap_build -D $WDIR/results/meta_gene_construction/GMAP_index \
+	-d meta_gene_$GENE $WDIR/results/meta_gene_construction/meta_gene_sequence.fa && touch $WDIR/results/meta_gene_construction/meta_gene_GMAP_index_build.COMPLETED
+
+echo "Creating a final FASTA of the meta-gene (one header line and contiguous FASTA sequence)"
+
+	echo ">meta_gene_$GENE" > $WDIR/results/meta_gene_construction/meta_gene_sequence.fa && \
+	cat $WDIR/results/meta_gene_construction/meta_gene_exons_sequences.fa | grep -v "^>" | tr -d '\n' >> $WDIR/results/meta_gene_construction/meta_gene_sequence.fa && \
+	echo >> $WDIR/results/meta_gene_construction/meta_gene_sequence.fa
+
+echo "Aligning the samples fasta files to the meta genome sequence"
+
+	for filename in $EXAMPLES/*.fa
+	do
+        	base=$(basename $filename .fa)
+        	echo "On sample : $base"
+        	gmap --align -f samse -D $WDIR/results/meta_gene_construction/GMAP_index \
+        	-d meta_gene_$GENE $EXAMPLES/${base}.fa > $WDIR/results/GMAP_align_meta_gene/${base}.gmap_metagene_all_exons.sam
+	done
+
+echo "Creating exon counts and splicing patterns"
+
+	for filename in $EXAMPLES/*.fa
+	do
+        	base=$(basename $filename .fa)
+        	echo "On sample : $base"
+			perl $SCRIPTS/get_novel_junctions_CIGAR_06c.pl \
+			$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+			$WDIR/results/GMAP_align_meta_gene/${base}.gmap_metagene_all_exons.sam $MIN_EXON_LENGTH $MIN_EXON_COVERAGE_FRACTION \
+			$WDIR/results/meta_gene_exon_counts_splicing_patterns 
+
+		touch $WDIR/results/meta_gene_exon_counts_splicing_patterns/${base}_$MIN_EXON_COVERAGE_FRACTION_exon_counts.COMPLETED
+	
+	done 
+
+echo "Parsing output of Wilfried script (file with read count for every exon) to obtain exons above specified threshold (at least 5 reads covering an exon in at least 2 individuals or at least 2 libraries from the same individual)"
+echo "exons_above_below_threshold_read_count_individuals_libraries"
+    
+	python3 -u $SCRIPTS/choosing_expressed_exons_from_metagene_counts_Wilfried_script.py \
+	$WDIR/input/barcode_to_sample.txt $WDIR/results/meta_gene_exon_counts_splicing_patterns \
+	exon_counts_$MIN_EXON_COVERAGE_FRACTION $MIN_INDIVIDUALS $MIN_LIBRARIES_PER_INDIVIDUAL $MIN_READ_COUNT \
+	$WDIR/results/exons_filtering/exons_after_filtering_min_reads_$MIN_READ_COUNT_min_individuals_$MIN_INDIVIDUALS_min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.included.txt \
+	$WDIR/results/exons_filtering/exons_after_filtering_min_reads_$MIN_READ_COUNT_min_individuals_$MIN_INDIVIDUALS_min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.excluded.txt
+
+echo "Removing reads overlapping removed exons"
+echo "excluding_reads_splicing_patterns_removed_exons"
+
+	for filename in $EXAMPLES/*.fa
+	do
+        	base=$(basename $filename .fa)
+        	echo "On sample : $base"
+
+			python3 -u $SCRIPTS/removing_reads_overlapping_removed_exons_Wilfried_script.py \
+			$WDIR/$WDIR/results/exons_filtering/exons_after_filtering_min_reads_$MIN_READ_COUNT_min_individuals_$MIN_INDIVIDUALS_min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.excluded.txt \
+			$WDIR/$WDIR/results/meta_gene_exon_counts_splicing_patterns/${base}_splicing_patterns_cds.tmp \
+			$WDIR/$WDIR/results/reads_splicing_patterns_removed_exons/${base}.min_reads_$MIN_READ_COUNT.min_individuals_$MIN_INDIVIDUALS.min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.included.txt \
+			$WDIR/$WDIR/results/reads_splicing_patterns_removed_exons/${base}.min_reads_$MIN_READ_COUNT.min_individuals_$MIN_INDIVIDUALS.min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.excluded.txt
+	done
+
+echo "Reporting the longest isoform with downweighted read counts"
+echo "downweighted_counts_longest_isoform"
+
+	python3 -u $SCRIPTS/assessing_longest_unique_isoforms_downweighting_reads_Wilfried_script.py \
+	$WDIR/input/barcode_to_sample_$GENE.txt $GENE \
+	$WDIR/results/reads_splicing_patterns_removed_exons .included.txt \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$WDIR/results/downweighted_read_counts_after_removing_exons/table.downweighted_read_counts.all_isoforms_included_exons.txt
+
+echo "Generating histogram of log10+0.0001 values of downweighted read counts for each sample"
+echo "histogram_log10_downweighted_counts"
+
+	cat $WDIR/input/samplenames_$GENE.txt | while read i; 
+		do
+			Rscript $SCRIPTS/histogram_log10_downweighted_read_counts.R \
+			$WDIR/results/downweighted_read_counts_after_removing_exons/table.downweighted_read_counts.all_isoforms_included_exons.txt \
+			$i \
+			$WDIR/results/downweighted_read_counts_after_removing_exons/histograms/$i.histogram.pdf
+		done
+
+echo "Filtering out the isoforms below specified thresholds - sum of reads per isoform and number of samples having at least specified number of reads"
+echo "filtering_downweighted_counts_sum_reads_samples"
+
+	python3 -u $SCRIPTS/filtering_downweighted_counts_file_sum_num_samples_reads.py \
+	$WDIR/results/downweighted_read_counts_after_removing_exons/table.downweighted_read_counts.all_isoforms_included_exons.txt \
+	100 $READS_IN_SAMPLE_FILTER $NUM_SAMPLES_THRESHOLD \
+	$WDIR/results/filtered_downweighted_read_counts/table.downweighted_read_counts.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+	python3 -u $SCRIPTS/filtering_downweighted_counts_file_sum_num_samples_reads.py \
+	$WDIR/results/downweighted_read_counts_after_removing_exons/table.downweighted_read_counts.all_isoforms_included_exons.txt \
+	24 $READS_IN_SAMPLE_FILTER $NUM_SAMPLES_THRESHOLD \
+	$WDIR/results/filtered_downweighted_read_counts/table.downweighted_read_counts.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+echo "Creating a table with information about known transcript IDs and novel exons for each splicing pattern in downweighted read counts file after filtering"
+echo "annotation_table_splicing_patterns_filtered_downweighted_counts"
+
+	python3 -u $SCRIPTS/creating_isoform_info_table_existing_novel.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$WDIR/results/filtered_downweighted_read_counts/table.downweighted_read_counts.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/annotation_table_filtered_downweighted_read_counts/annotation_table.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+	python3 -u $SCRIPTS/creating_isoform_info_table_existing_novel.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$WDIR/results/filtered_downweighted_read_counts/table.downweighted_read_counts.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/annotation_table_filtered_downweighted_read_counts/annotation_table.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+echo "Performing a TMM normalization across downweighted reads"
+echo "TMM_normalization_downweighted_read_counts"
+
+	python3 -u $SCRIPTS/tmm_normalization_downweighted_counts.py \
+	$WDIR/results/filtered_downweighted_read_counts/table.downweighted_read_counts.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.geom_mean_transcripts.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.samples_factor.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+	python3 -u $SCRIPTS/tmm_normalization_downweighted_counts.py \
+	$WDIR/results/filtered_downweighted_read_counts/table.downweighted_read_counts.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.geom_mean_transcripts.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.samples_factor.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+
+echo "Visualisation - heatmaps"
+echo "visualisation_heatmaps_with_without_dendro"
+
+	Rscript $SCRIPTS/heatmap_tmm_normalized_counts.R \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/plots/heatmaps/heatmap.dendro.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/heatmaps/heatmap.no_dendro.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf
+
+	Rscript $SCRIPTS/heatmap_tmm_normalized_counts.R \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/plots/heatmaps/heatmap.dendro.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/heatmaps/heatmap.no_dendro.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf
+
+echo "Visualisation - PCA plots"
+echo "visualization_pca_plots"
+
+	Rscript $SCRIPTS/pca_diagnostic_plots.R \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/reads_splicing_patterns_removed_exons .included $WDIR/input/barcode_to_sample.txt \
+	$WDIR/results/plots/PCA/sample_dist_hist.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/pca_plot_pc1_pc2.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/pca_plot_pc1_pc3.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/pca_plot_pc2_pc3.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/variance_explained_pc.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/contributions_transcripts_pc1.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/contributions_transcripts_pc2.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/contributions_transcripts_pc3.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/corr_pc1_num_reads.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/corr_pc2_num_reads.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/corr_pc3_num_reads.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf
+
+	Rscript $SCRIPTS/pca_diagnostic_plots.R \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/reads_splicing_patterns_removed_exons .included $WDIR/input/barcode_to_sample.txt \
+	$WDIR/results/plots/PCA/sample_dist_hist.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/pca_plot_pc1_pc2.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/pca_plot_pc1_pc3.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/pca_plot_pc2_pc3.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/variance_explained_pc.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/contributions_transcripts_pc1.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/contributions_transcripts_pc2.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/contributions_transcripts_pc3.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/corr_pc1_num_reads.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/corr_pc2_num_reads.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
+	$WDIR/results/plots/PCA/corr_pc3_num_reads.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf
+
+echo "Creating a table with information about known transcript IDs and novel exons for each splicing pattern in downweighted read counts file before filtering"
+echo "annotation_table_splicing_patterns_all_downweighted_counts"
+
+	python3 -u $SCRIPTS/creating_isoform_info_table_existing_novel.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$WDIR/results/downweighted_read_counts_after_removing_exons/table.downweighted_read_counts.all_isoforms_included_exons.txt \
+	$WDIR/results/all_isoforms_annotation_table_downweighted_reads/all_isoforms.downweighted_reads.annotation_table.txt
+
+echo "Creating annotation table with coding status and length of coding transcripts, BED12 file and FASTA file with sequences of coding isoforms"
+echo "annotation_coding_status_length_bed12_fasta"
+
+	python3 -u $SCRIPTS/adding_coding_annotation_isoform_info_bed12_fasta.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$GENOME $CHR $STRAND $WDIR/results/all_isoforms_annotation_table_downweighted_reads/all_isoforms.downweighted_reads.annotation_table.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.all_isoforms.coding_length.txt \
+	$WDIR/results/coding_length_extra_annotation/bed12.all_isoforms.coding_length.bed12 \
+	$WDIR/results/coding_length_extra_annotation/fasta_coding.all_isoforms.coding_length.fa
+
+echo "Creating annotation table with coding status and length of coding transcripts, BED12 file and FASTA file with sequences of coding isoforms for isoforms after thresholding"
+echo "annotation_coding_status_length_bed12_fasta_filtered_24_100"
+
+	python3 -u $SCRIPTS/adding_coding_annotation_isoform_info_bed12_fasta.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$GENOME $CHR $STRAND $WDIR/results/annotation_table_filtered_downweighted_read_counts/annotation_table.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.txt \
+	$WDIR/results/coding_length_extra_annotation/bed12.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.bed12 \
+	$WDIR/results/coding_length_extra_annotation/fasta_coding.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.fa
+
+	python3 -u $SCRIPTS/adding_coding_annotation_isoform_info_bed12_fasta.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$GENOME $CHR $STRAND $WDIR/results/annotation_table_filtered_downweighted_read_counts/annotation_table.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.txt \
+	$WDIR/results/coding_length_extra_annotation/bed12.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.bed12 \
+	$WDIR/results/coding_length_extra_annotation/fasta_coding.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.fa
+
+echo "Creating a table with missing exons/novel exon-exon junctions in coding sequences"
+echo "missing_exons_novel_junctions_table"
+
+	python3 -u $SCRIPTS/finding_exon_skipping_events_coding_transcripts_info_table.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.txt \
+	$WDIR/results/missing_exons_novel_junctions_expression/table.missing_exons_novel_junctions.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+	python3 -u $SCRIPTS/finding_exon_skipping_events_coding_transcripts_info_table.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.txt \
+	$WDIR/results/missing_exons_novel_junctions_expression/table.missing_exons_novel_junctions.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt
+
+echo "Creating FASTA file and info table for non-coding transcript"
+echo "FASTA_info_table_transcripts_non_coding_transcripts"
+
+	python3 -u $SCRIPTS/fasta_novel_noncoding_exons_info_table.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$GENOME $CHR $STRAND $WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.txt _ $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table/info_table.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/non_coding_novel_exons_transcript_fasta_info_table/fasta_non_coding_transcripts.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.fa
+
+	python3 -u $SCRIPTS/fasta_novel_noncoding_exons_info_table.py \
+	$WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+	$GENOME $CHR $STRAND $WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/coding_length_extra_annotation/annotation_table.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.coding_length.txt _ $WDIR/results/non_coding_novel_exons_transcript_fasta_info_table/info_table.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
+	$WDIR/results/non_coding_novel_exons_transcript_fasta_info_table/fasta_non_coding_transcripts.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.fa
+
+echo "END OF TAQLoRe 1 and 2 - Run Part 3, if required"
