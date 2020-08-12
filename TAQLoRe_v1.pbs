@@ -57,6 +57,7 @@ NUM_SAMPLES_THRESHOLD=2
 
 echo "Making directories for part 1"
 
+mkdir -p $WDIR/nanoplot_QC
 mkdir -p $WDIR/LAST_transcriptome
 mkdir -p $WDIR/LAST_transcriptome/alignments_maf
 mkdir -p $WDIR/LAST_transcriptome/substitution_rate
@@ -74,6 +75,17 @@ mkdir -p $WDIR/results/meta_gene_construction
 ##                                                                                                      ## 
 ##########################################################################################################
 
+
+echo "Performing QC with nanoplot on the fasta files"
+
+for filename in $EXAMPLES/*.fa
+        do
+                base=$(basename $filename .fa)
+                echo "On sample : $base"
+		
+              NanoStat --fasta $EXAMPLES/${base}.fa --outdir $WDIR/nanoplot_QC/${base}_statreports
+
+        done
 
 for filename in $EXAMPLES/*.fa
         do
