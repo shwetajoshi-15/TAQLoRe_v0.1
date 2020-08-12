@@ -7,7 +7,7 @@
 #PBS -j oe
 #PBS -m abe
 #PBS -M email@student.unimelb.edu.au
-#PBS -N TAQLoRe_v1
+#PBS -N TAQLoRe_v1_NEGR1
 
 source activate taqlore
 
@@ -137,7 +137,7 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-		cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="chr12" && $2>=1970786 && $3<=2697950){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
+		cat $WDIR/results/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="chr1" && $2>=71395943 && $3<=72282539){{print $0}}}}' > $WDIR/results/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
 	done
 
 
@@ -230,7 +230,7 @@ echo "Assigning variables based on config_TAQLoRe.json"
 
 echo "Generate a BED file (0-based) with genomic coordinates of all the exons in the meta-gene"
 
-	cat $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt | awk 'BEGIN{OFS="\t"}{print "$CHR", $3-1, $4, ".", ".", "$STRAND"}' > $WDIR/results/meta_gene_construction/genomic_coordinates_all_exons.bed
+	cat $WDIR/results/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt | awk 'BEGIN{OFS="\t"}{print "chr1", $3-1, $4, ".", ".", "$STRAND"}' > $WDIR/results/meta_gene_construction/genomic_coordinates_all_exons.bed
 
 echo "Obtain FASTA sequence of exons to construct meta-gene"
 
@@ -278,7 +278,7 @@ echo "Parsing output of Wilfried script (file with read count for every exon) to
 echo "exons_above_below_threshold_read_count_individuals_libraries"
     
 	python3 -u $SCRIPTS/choosing_expressed_exons_from_metagene_counts_Wilfried_script.py \
-	$WDIR/input/barcode_to_sample.txt $WDIR/results/meta_gene_exon_counts_splicing_patterns \
+	$WDIR/input/barcode_to_sample_$GENE.txt $WDIR/results/meta_gene_exon_counts_splicing_patterns \
 	exon_counts_$MIN_EXON_COVERAGE_FRACTION $MIN_INDIVIDUALS $MIN_LIBRARIES_PER_INDIVIDUAL $MIN_READ_COUNT \
 	$WDIR/results/exons_filtering/exons_after_filtering_min_reads_$MIN_READ_COUNT_min_individuals_$MIN_INDIVIDUALS_min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.included.txt \
 	$WDIR/results/exons_filtering/exons_after_filtering_min_reads_$MIN_READ_COUNT_min_individuals_$MIN_INDIVIDUALS_min_libraries_$MIN_LIBRARIES_PER_INDIVIDUAL.excluded.txt
@@ -378,7 +378,7 @@ echo "visualization_pca_plots"
 
 	Rscript $SCRIPTS/pca_diagnostic_plots.R \
 	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
-	$WDIR/results/reads_splicing_patterns_removed_exons .included $WDIR/input/barcode_to_sample.txt \
+	$WDIR/results/reads_splicing_patterns_removed_exons .included $WDIR/input/barcode_to_sample_$GENE.txt \
 	$WDIR/results/plots/PCA/sample_dist_hist.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
 	$WDIR/results/plots/PCA/pca_plot_pc1_pc2.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
 	$WDIR/results/plots/PCA/pca_plot_pc1_pc3.sum_100.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
@@ -393,7 +393,7 @@ echo "visualization_pca_plots"
 
 	Rscript $SCRIPTS/pca_diagnostic_plots.R \
 	$WDIR/results/tmm_normalized_filtered_downweighted_read_counts/table.tmm_norm.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.txt \
-	$WDIR/results/reads_splicing_patterns_removed_exons .included $WDIR/input/barcode_to_sample.txt \
+	$WDIR/results/reads_splicing_patterns_removed_exons .included $WDIR/input/barcode_to_sample_$GENE.txt \
 	$WDIR/results/plots/PCA/sample_dist_hist.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
 	$WDIR/results/plots/PCA/pca_plot_pc1_pc2.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
 	$WDIR/results/plots/PCA/pca_plot_pc1_pc3.sum_24.min_reads_per_sample_$READS_IN_SAMPLE_FILTER.min_samples_$NUM_SAMPLES_THRESHOLD.pdf \
