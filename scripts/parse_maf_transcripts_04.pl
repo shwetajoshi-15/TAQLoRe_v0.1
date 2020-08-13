@@ -56,7 +56,7 @@ if(scalar keys %selected_reads > 0){
 	open(OUT5, ">$outpath/selected_reads_potential_exons.fa");
 	GET_SEQ($fasta_2D);
 	close OUT5;
-	system("lastal -P $threads $genomeDB $outpath/selected_reads_potential_exons.fa > $outpath/selected_reads_potential_exons.maf \n")==0||die"FAIL LAST $genomeDB \n";
+	system("lastal $genomeDB $outpath/selected_reads_potential_exons.fa > $outpath/selected_reads_potential_exons.maf \n")==0||die"FAIL LAST $genomeDB \n";
 }
 ########################################################
 #parse the annotation file to generate a bed file of the exon positions and an hash associating positions within transcripts to genomic positions 
