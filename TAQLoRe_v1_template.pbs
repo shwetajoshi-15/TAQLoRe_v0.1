@@ -178,9 +178,9 @@ echo "This rule generate a file with positions of novel exons (irrespectively of
 
 if [[ $STRAND == '+' ]]
 then # if/then branch
-  cat $WDIR/results_$GENE/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2n -k3,3n | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results_$GENE/meta_gene_construction/novel_exons_coordinates_1nt.txt
+  cat $WDIR/results_$GENE/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2n -k3,3n | awk 'BEGIN{{OFS="\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results_$GENE/meta_gene_construction/novel_exons_coordinates_1nt.txt
 else
-  cat $WDIR/results_$GENE/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2nr -k3,3nr | awk 'BEGIN{{OFS="\\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results_$GENE/meta_gene_construction/novel_exons_coordinates_1nt.txt
+  cat $WDIR/results_$GENE/bedgraph_info_novel_exons/novel_exons_summary.txt | bedtools merge -i - | sort -k1,1 -k2,2nr -k3,3nr | awk 'BEGIN{{OFS="\t"}}{{print $1, $2+1, $3, $4="novel_exon"(FNR)}}' > $WDIR/results_$GENE/meta_gene_construction/novel_exons_coordinates_1nt.txt
 fi
 
 echo "Generating files with meta-gene and genomic coordinates of exons (coordinates in 1-based format)"
