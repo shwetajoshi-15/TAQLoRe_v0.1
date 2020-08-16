@@ -24,9 +24,9 @@ GENE_END=2697950
 
 echo "Assigning paths"
 
-EXAMPLES=/g/data/tv28/sj9072/taqlore_dir/TAQLoRe_v1/examples/$GENE
-WDIR=/g/data/tv28/sj9072/taqlore_dir/TAQLoRe_v1/workdir
-SCRIPTS=/g/data/tv28/sj9072/taqlore_dir/TAQLoRe_v1/scripts
+EXAMPLES=/path/to/taqlore_dir/TAQLoRe_v1/examples/$GENE
+WDIR=/path/to/taqlore_dir/TAQLoRe_v1/workdir
+SCRIPTS=/path/to/taqlore_dir/TAQLoRe_v1/scripts
 
 echo "Assigning variables"
 
