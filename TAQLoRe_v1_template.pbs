@@ -32,7 +32,7 @@ echo "Assigning variables"
 
 GENOME=$WDIR/input/GRCh38.p13.genome_edit.fa
 ANNOTATIONS=$WDIR/input/gencode.v34.annotation.gtf
-EXISTING_EXONS=$WDIR/input/ENSEMBL_CACNA1C.txt
+EXISTING_EXONS=$WDIR/input/$GENE_ENSEMBL.txt
 
 CHROM_SIZES=$WDIR/input/chrom_sizes.txt
 
