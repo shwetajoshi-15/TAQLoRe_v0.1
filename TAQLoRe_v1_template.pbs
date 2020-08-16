@@ -192,19 +192,22 @@ $STRAND $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordi
 
 echo "Generating UTR annotations from the GTF file and creating a bed file"
 
-cat $ANNOTATIONS | grep $GENE_ID | awk '$3 == "UTR"' | awk '{print $1"\t"$4"\t"$5}' > $WDIR/input/"$GENE"_UTR_all.bed #extracting all UTRs in a BED format
-cat $ANNOTATIONS | grep $GENE_ID | awk '$3 == "CDS"' | awk '{print $1"\t"$4"\t"$5}' > $WDIR/input/"$GENE"_CDS_all.bed #extracting all CDSs in a BED format
+cat $ANNOTATIONS | grep $GENE_ID | awk '$3 == "UTR"' | awk '{print $1"\t"$4"\t"$5}' > $WDIR/input/"$GENE"_UTR_all.bed  #extracting all UTRs in a BED format
+cat $ANNOTATIONS | grep $GENE_ID | awk '$3 == "CDS"' | awk '{print $1"\t"$4"\t"$5}' > $WDIR/input/"$GENE"_CDS_all.bed  #extracting all CDSs in a BED format
 
 #subtracting the CDS blocks from UTR blocks 
-bedtools subtract -a $WDIR/input/"$GENE"_UTR_all.bed -b $WDIR/input/"$GENE"_CDS_all.bed > $WDIR/input/"$GENE"_UTR_only.bed 
+
+bedtools subtract -b $WDIR/input/"$GENE"_UTR_all.bed -a $WDIR/input/"$GENE"_CDS_all.bed > $WDIR/input/"$GENE"_UTR_only.bed
+
+#converting tab separators to space separators
+sed -e 's/\t/ /g' $WDIR/input/"$GENE"_UTR_only.bed > $WDIR/input/"$GENE"_UTR_only_tab.bed
 
 echo "Annotating the genomic coordinates of exons with UTR annotaions" 
 
-Rscript $SCRIPTS/UTR_anno.r -f $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
+Rscript $SCRIPTS/UTR_anno.R -f $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
 -u $WDIR/input/"$GENE"_UTR_only.bed -o $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
 
 sed -i 's/NA\tNA/NA/g' $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
-
 
 ##########################################################################################################
 ##                                                                                                      ## 
