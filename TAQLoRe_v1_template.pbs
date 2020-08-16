@@ -141,7 +141,7 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-		cat $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="chr7" && $2>=93424487 && $3<=93574730){{print $0}}}}' > $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
+		cat $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="chr12" && $2>=1970786 && $3<=2697950){{print $0}}}}' > $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
 	done
 
 
