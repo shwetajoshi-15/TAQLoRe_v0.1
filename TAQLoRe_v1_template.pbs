@@ -205,7 +205,7 @@ sed -e 's/\t/ /g' $WDIR/input/"$GENE"_UTR_only.bed > $WDIR/input/"$GENE"_UTR_onl
 echo "Annotating the genomic coordinates of exons with UTR annotaions" 
 
 Rscript $SCRIPTS/UTR_anno.R -f $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt \
--u $WDIR/input/"$GENE"_UTR_only.bed -o $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
+-u $WDIR/input/"$GENE"_UTR_only_tab.bed -o $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
 
 sed -i 's/NA\tNA/NA/g' $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt
 
