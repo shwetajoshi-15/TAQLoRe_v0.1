@@ -83,12 +83,23 @@ mkdir -p $WDIR/results_$GENE/meta_gene_construction
 echo "Performing QC with nanoplot on the fasta files"
 
 for filename in $EXAMPLES/*.fa
+	do
+	base=$(basename $filename .fa)
+	echo "On sample : $base"
+	
+	NanoStat --fasta $EXAMPLES/${base}.fa --outdir $WDIR/nanoplot_QC_$GENE/${base}_statreports
+
+        done
+	
+echo "Downsampling fasta files to 8K reads"
+
+for filename in $EXAMPLES/*.fa
         do
-                base=$(basename $filename .fa)
+           base=$(basename $filename .fa)
                 echo "On sample : $base"
 		
-              NanoStat --fasta $EXAMPLES/${base}.fa --outdir $WDIR/nanoplot_QC_$GENE/${base}_statreports
-
+              reformat.sh samplereadstarget=8000 input=$EXAMPLES/${base}.fa output=$EXAMPLES/downsampled_8K/${base}.fa
+	      NanoStat --fasta $EXAMPLES/${base}.fa --outdir $WDIR/nanoplot_QC_$GENE/${base}_statreports
         done
 
 for filename in $EXAMPLES/*.fa
@@ -96,7 +107,7 @@ for filename in $EXAMPLES/*.fa
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
 
-               lastal $WDIR/LAST_index/transcriptome $EXAMPLES/${base}.fa > $WDIR/LAST_transcriptome_$GENE/alignments_maf/${base}.maf
+               lastal $WDIR/LAST_index/transcriptome $EXAMPLES/downsampled_8K/${base}.fa > $WDIR/LAST_transcriptome_$GENE/alignments_maf/${base}.maf
 
         done
 
@@ -109,7 +120,7 @@ for filename in $EXAMPLES/*.fa
                         perl $SCRIPTS/parse_maf_transcripts_04.pl \
                         $WDIR/LAST_transcriptome_$GENE/alignments_maf/${base}.maf \
                         $ANNOTATIONS $MIN_PROP $MIN_PROP_ALIGN $MIN_INSERT $MIN_EXON_DISTANCE 4 \
-                        $EXAMPLES/${base}.fa $WDIR/LAST_index/genome \
+                        $EXAMPLES/downsampled_8K/${base}.fa $WDIR/LAST_index/genome \
                         $WDIR/results_$GENE/parsed_last_output/${base}
                       
                touch $WDIR/results_$GENE/parsed_last_output/${base}/${base}.parse_maf_transcripts_04.COMPLETED
@@ -141,7 +152,7 @@ for filename in $EXAMPLES/*.fa
         do
                 base=$(basename $filename .fa)
                 echo "On sample : $base"
-		cat $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1=="chr12" && $2>=1970786 && $3<=2697950){{print $0}}}}' > $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
+		cat $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons.bed | awk 'BEGIN{{OFS="\t"}}{{if($1==$CHR && $2>=$GENE_START && $3<=$GENE_END){{print $0}}}}' > $WDIR/results_$GENE/parsed_last_output/${base}/reads_missing_exons_gene_boundaries.bed
 	done
 
 
