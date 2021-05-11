@@ -1,3 +1,65 @@
+#!/bin/bash
+#PBS -q normal
+#PBS -l walltime=08:00:00
+#PBS -lstorage=scratch/tv28+gdata/tv28+gdata/yf0
+#PBS -l mem=64GB
+#PBS -l ncpus=12
+#PBS -l wd
+#PBS -j oe
+#PBS -m abe
+#PBS -M email@student.unimelb.edu.au
+#PBS -N TAQLoRe_v1_CACNA1C
+
+source activate taqlore
+
+echo "Gene of Interest"
+# The start site, end site and the chromosome number need to be manually edited in the script!
+
+GENE_ID=ENSG00000151067
+GENE=CACNA1C
+CHR=chr12
+STRAND=+
+GENE_START=1970786
+GENE_END=2697950
+
+echo "Assigning paths"
+
+EXAMPLES=/path/to/taqlore_dir/TAQLoRe_v1/examples/$GENE
+WDIR=/path/to/taqlore_dir/TAQLoRe_v1/workdir
+SCRIPTS=/path/to/taqlore_dir/TAQLoRe_v1/scripts
+
+echo "Assigning variables"
+
+GENOME=$WDIR/input/GRCh38.p13.genome_edit.fa
+ANNOTATIONS=$WDIR/input/gencode.v34.annotation.gtf
+EXISTING_EXONS=$WDIR/input/$GENE_ENSEMBL.txt
+
+CHROM_SIZES=$WDIR/input/chrom_sizes.txt
+
+
+echo "Assigning parameters"
+
+MIN_PROP=0.5
+MIN_PROP_ALIGN=0.8 
+MIN_INSERT=9
+MIN_EXON_DISTANCE=6
+
+
+DISTANCE_BETWEEN_EXONS=200
+
+
+MIN_EXON_LENGTH=6
+MIN_EXON_COVERAGE_FRACTION=0.7
+
+MIN_INDIVIDUALS=1
+MIN_LIBRARIES_PER_INDIVIDUAL=1 
+MIN_READ_COUNT=5
+
+
+READS_IN_SAMPLE_FILTER=1 
+NUM_SAMPLES_THRESHOLD=1
+
+
 ##########################################################################################################
 ##                                                                                                      ## 
 ##                                   Starting TAQLoRe Part 2                                            ##
@@ -30,34 +92,34 @@ echo "Assigning variables based on config_TAQLoRe.json"
 
 echo "Generate a BED file (0-based) with genomic coordinates of all the exons in the meta-gene"
 
-#       cat $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt | awk 'BEGIN{OFS="\t"}{print "'$CHR'", $3-1, $4, ".", ".", "'$STRAND'"}' > $WDIR/results_$GENE/meta_gene_construction/genomic_coordinates_all_exons.bed
+       cat $WDIR/results_$GENE/meta_gene_construction/meta_gene_genomic_exon_coordinates.txt | awk 'BEGIN{OFS="\t"}{print "'$CHR'", $3-1, $4, ".", ".", "'$STRAND'"}' > $WDIR/results_$GENE/meta_gene_construction/genomic_coordinates_all_exons.bed
 
 echo "Obtain FASTA sequence of exons to construct meta-gene"
 
-#       bedtools getfasta -s -fi $GENOME \
-#       -bed $WDIR/results_$GENE/meta_gene_construction/genomic_coordinates_all_exons.bed \
-#       -fo $WDIR/results_$GENE/meta_gene_construction/meta_gene_exons_sequences.fa
+       bedtools getfasta -s -fi $GENOME \
+       -bed $WDIR/results_$GENE/meta_gene_construction/genomic_coordinates_all_exons.bed \
+       -fo $WDIR/results_$GENE/meta_gene_construction/meta_gene_exons_sequences.fa
 
 echo "Creating an index of meta-gene for GMAP aligner"
 
-#       gmap_build -D $WDIR/results_$GENE/meta_gene_construction/GMAP_index \
-#       -d meta_gene_$GENE $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && touch $WDIR/results_$GENE/meta_gene_construction/meta_gene_GMAP_index_build.COMPLETED
+       gmap_build -D $WDIR/results_$GENE/meta_gene_construction/GMAP_index \
+       -d meta_gene_$GENE $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && touch $WDIR/results_$GENE/meta_gene_construction/meta_gene_GMAP_index_build.COMPLETED
 
 echo "Creating a final FASTA of the meta-gene (one header line and contiguous FASTA sequence)"
 
-#       echo ">meta_gene_$GENE" > $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && \
-#       cat $WDIR/results_$GENE/meta_gene_construction/meta_gene_exons_sequences.fa | grep -v "^>" | tr -d '\n' >> $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && \
-#       echo >> $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa
+       echo ">meta_gene_$GENE" > $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && \
+       cat $WDIR/results_$GENE/meta_gene_construction/meta_gene_exons_sequences.fa | grep -v "^>" | tr -d '\n' >> $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && \
+       echo >> $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa
 
 echo "Aligning the samples fasta files to the meta genome sequence"
 
-#       for filename in $EXAMPLES/*.fa
-#       do
-#               base=$(basename $filename .fa)
-#               echo "On sample : $base"
-#               gmap --align -f samse -D $WDIR/results_$GENE/meta_gene_construction/GMAP_index \
-#               -d meta_gene_$GENE $EXAMPLES/${base}.fa > $WDIR/results_$GENE/GMAP_align_meta_gene/${base}.gmap_metagene_all_exons.sam
-#       done
+       for filename in $EXAMPLES/*.fa
+       do
+               base=$(basename $filename .fa)
+               echo "On sample : $base"
+               gmap --align -f samse -D $WDIR/results_$GENE/meta_gene_construction/GMAP_index \
+               -d meta_gene_$GENE $EXAMPLES/${base}.fa > $WDIR/results_$GENE/GMAP_align_meta_gene/${base}.gmap_metagene_all_exons.sam
+       done
 
 echo "Creating exon counts and splicing patterns"
 
