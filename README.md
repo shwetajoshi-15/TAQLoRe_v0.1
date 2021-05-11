@@ -2,7 +2,7 @@
 
 This repository consists of scripts for installation, set-up and execution of the exon based arm of TAQLoRe on a PBS based HPC system.
 
-💡 TAQLoRe github https://github.com/twrzes/TAQLoRe
+💡 TAQLoRe github https://github.com/twrzes/TAQLoRe \n
 💡 Exisiting annotation for CACNA1C can be found in /path/to/TAQLoRe_v1/wokdir/input.
 
 
