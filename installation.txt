@@ -22,16 +22,6 @@ https://github.com/twrzes/TAQLoRe
   # Installing snakemake-minimal
   conda install snakemake
   
-🖥 Installing other packages for running TAQLoRe
-
-conda install -c aroth85 bioutils
-conda install -c bioconda pybedtools
-conda install -c bioconda bedtools 
-conda install -c bioconda gmap
-conda install -c bioconda last
-conda install -c bioconda nanostat
-conda install -c bioconda multiqc
-
 🖥 Setting up a directory and downloading TAQLoRe
    
   # Make the following directory in the location of your choice within the working directory (not home directory)
@@ -41,7 +31,18 @@ conda install -c bioconda multiqc
   
 🖥 Creating a conda environment
 
-conda env create --file /path/to/taqlore_dir/TAQLoRe_v1/envs/taqlore.yaml
+conda env create --file /path/to/taqlore_dir/TAQLoRe_v1/envs/taqlore.yaml 
+  
+🖥 Installing other packages in the env taqlore for running TAQLoRe
+
+conda install -c aroth85 bioutils
+conda install -c bioconda pybedtools
+conda install -c bioconda bedtools 
+conda install -c bioconda gmap
+conda install -c bioconda last
+conda install -c bioconda nanostat
+conda install -c bioconda multiqc
+
 
 🗃 Reference Files for taqlore_dir/TAQLoRe_v1/workdir/input/
    
@@ -90,7 +91,7 @@ Jan_5298_cingulate
   
 🖥 Format of sample filenames for use with TAQLoRe
   
-  { ls -lh /path/to/taqlore_dir/TAQLoRe/examples/CACNA1C }
+  { ls -lh /path/to/taqlore_dir/TAQLoRe/examples/GENENAME}
   
   2017_01_13.barcode01.fa
   2017_01_13.barcode02.fa
