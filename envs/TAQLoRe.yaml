@@ -65,7 +65,7 @@ dependencies:
   - gitdb2=2.0.5=py_0
   - gitpython=2.1.11=py_0
   - glib=2.58.3=hf63aee3_1001
-  - gmap=2018.07.04=pl526he4cf2ce_0
+  #- gmap=2018.07.04=pl526he4cf2ce_0
   - google-api-core=1.10.0=py37_0
   - google-auth=1.6.3=py_0
   - google-cloud-core=0.29.1=py_0
@@ -93,7 +93,7 @@ dependencies:
   - jupyter_client=5.2.4=py_3
   - jupyter_core=4.4.0=py_0
   - krb5=1.16.3=h05b26f9_1001
-  - last=638=1
+  #- last=638=1
   - libblas=3.8.0=9_openblas
   - libcblas=3.8.0=9_openblas
   - libcurl=7.64.1=hda55be3_0
