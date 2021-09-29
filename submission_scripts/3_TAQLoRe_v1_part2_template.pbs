@@ -100,16 +100,18 @@ echo "Obtain FASTA sequence of exons to construct meta-gene"
        -bed $WDIR/results_$GENE/meta_gene_construction/genomic_coordinates_all_exons.bed \
        -fo $WDIR/results_$GENE/meta_gene_construction/meta_gene_exons_sequences.fa
 
-echo "Creating an index of meta-gene for GMAP aligner"
-
-       gmap_build -D $WDIR/results_$GENE/meta_gene_construction/GMAP_index \
-       -d meta_gene_$GENE $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && touch $WDIR/results_$GENE/meta_gene_construction/meta_gene_GMAP_index_build.COMPLETED
-
 echo "Creating a final FASTA of the meta-gene (one header line and contiguous FASTA sequence)"
 
        echo ">meta_gene_$GENE" > $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && \
        cat $WDIR/results_$GENE/meta_gene_construction/meta_gene_exons_sequences.fa | grep -v "^>" | tr -d '\n' >> $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && \
        echo >> $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa
+
+
+echo "Creating an index of meta-gene for GMAP aligner"
+
+       gmap_build -D $WDIR/results_$GENE/meta_gene_construction/GMAP_index \
+       -d meta_gene_$GENE $WDIR/results_$GENE/meta_gene_construction/meta_gene_sequence.fa && touch $WDIR/results_$GENE/meta_gene_construction/meta_gene_GMAP_index_build.COMPLETED
+
 
 echo "Aligning the samples fasta files to the meta genome sequence"
 
